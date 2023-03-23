@@ -13,8 +13,11 @@ def get_config(key: str):
 
 if __name__ == '__main__':
     api_key = get_config('apikey')
+    response = con.get_match("EUW1_6309535507", api_key)
 
-    my_match = from_dict(data_class=lol.MatchDto, data=con.get_match("EUW1_6309535507", api_key))
+    print(response['info'])
+
+    my_match = from_dict(data_class=lol.MatchDto, data=response)
 
     print(type(my_match))
 
