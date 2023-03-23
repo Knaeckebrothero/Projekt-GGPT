@@ -1,1 +1,1 @@
-from loldata.data.match import MatchLearning
+from loldata.data.match import MatchDto

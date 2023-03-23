@@ -1,13 +1,67 @@
-# Class representing a league game
-class Match:
+"""
+Dataclass representing a MatchDto.
+"""
 
-    def __init__(self, match_dto: dict):
-        self.participants = match_dto["metadata"]["participants"]
+from dataclasses import dataclass, field
+from typing import List, Dict, Any
 
 
-# Modified variant better suited for machine learning, looking at the match from a player perspective.
-class MatchLearning(Match):
+@dataclass
+class Metadata:
+    data_version: str
+    match_id: str
+    participants: List[str]
 
-    def __init__(self, match_dto: dict, puu_id: str):
-        super().__init__(match_dto)
-        self.won = match_dto["info"]["participants"][match_dto["metadata"]["participants"].index(puu_id)]["win"]
+
+@dataclass
+class ParticipantIdentity:
+    participant_id: int
+    player: Dict[str, Any]
+
+
+@dataclass
+class ParticipantStats:
+    stats: Dict[str, Any]
+
+
+@dataclass
+class ParticipantTimeline:
+    timeline: Dict[str, Any]
+
+
+@dataclass
+class Participant:
+    participant_id: int
+    team_id: int
+    champion_id: int
+    spell1_id: int
+    spell2_id: int
+    stats: ParticipantStats
+    timeline: ParticipantTimeline
+
+
+@dataclass
+class Team:
+    team_id: int
+    win: bool
+    objectives: Dict[str, Dict[str, Any]]
+
+
+@dataclass
+class Info:
+    game_datetime: int
+    game_length: float
+    game_id: int
+    game_start_timestamp: int
+    game_version: str
+    map_id: int
+    queue_id: int
+    season_id: int
+    teams: List[Team]
+    participants: List[Participant]
+
+
+@dataclass
+class MatchDto:
+    metadata: Metadata
+    info: Info
