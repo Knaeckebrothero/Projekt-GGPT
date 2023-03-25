@@ -1,32 +1,69 @@
 """
 Dataclass representing a MatchDto.
+
+https://developer.riotgames.com/apis#match-v5/GET_getMatch
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List
 
 
 @dataclass
-class Metadata:
-    dataVersion: str
-    matchId: str
-    participants: List[str]
+class PerkStatsDto:
+    defense: int
+    flex: int
+    offense: int
 
 
 @dataclass
-class ParticipantIdentity:
-    participantId: int
-    player: Dict[str, Any]
+class PerkStyleSelectionDto:
+    perk: int
+    var1: int
+    var2: int
+    var3: int
 
 
 @dataclass
-class ParticipantStats:
-    stats: Dict[str, Any]
+class PerkStyleDto:
+    description: str
+    selections: List[PerkStyleSelectionDto]
+    style: int
 
 
 @dataclass
-class ParticipantTimeline:
-    timeline: Dict[str, Any]
+class PerksDto:
+    statPerks: PerkStatsDto
+    styles: List[PerkStyleDto]
+
+
+@dataclass
+class ObjectiveDto:
+    first: bool
+    kills: int
+
+
+@dataclass
+class ObjectivesDto:
+    baron: ObjectiveDto
+    champion: ObjectiveDto
+    dragon: ObjectiveDto
+    inhibitor: ObjectiveDto
+    riftHerald: ObjectiveDto
+    tower: ObjectiveDto
+
+
+@dataclass
+class BanDto:
+    championId: int
+    pickTurn: int
+
+
+@dataclass
+class TeamDto:
+    bans: List[BanDto]
+    objectives: ObjectivesDto
+    teamId: int
+    win: bool
 
 
 @dataclass
@@ -40,6 +77,7 @@ class ParticipantDto:
     championName: str
     championTransform: int
     consumablesPurchased: int
+    damageDealtToBuildings: int
     damageDealtToObjectives: int
     damageDealtToTurrets: int
     damageSelfMitigated: int
@@ -57,6 +95,8 @@ class ParticipantDto:
     goldSpent: int
     individualPosition: str
     inhibitorKills: int
+    inhibitorTakedowns: int
+    inhibitorsLost: int
     item0: int
     item1: int
     item2: int
@@ -77,13 +117,13 @@ class ParticipantDto:
     magicDamageTaken: int
     neutralMinionsKilled: int
     nexusKills: int
-    nexusLost: int
     nexusTakedowns: int
+    nexusLost: int
     objectivesStolen: int
     objectivesStolenAssists: int
     participantId: int
     pentaKills: int
-    perks: Dict[str, Any]
+    perks: PerksDto
     physicalDamageDealt: int
     physicalDamageDealtToChampions: int
     physicalDamageTaken: int
@@ -136,14 +176,7 @@ class ParticipantDto:
 
 
 @dataclass
-class Team:
-    teamId: int
-    win: bool
-    objectives: Dict[str, Dict[str, Any]]
-
-
-@dataclass
-class Info:
+class InfoDto:
     gameCreation: int
     gameDuration: int
     gameEndTimestamp: int
@@ -154,13 +187,21 @@ class Info:
     gameType: str
     gameVersion: str
     mapId: int
+    participants: List[ParticipantDto]
     platformId: str
     queueId: int
-    teams: List[Team]
-    participants: List[ParticipantDto]
+    teams: List[TeamDto]
+    tournamentCode: str
+
+
+@dataclass
+class MetadataDto:
+    dataVersion: str
+    matchId: str
+    participants: List[str]
 
 
 @dataclass
 class MatchDto:
-    metadata: Metadata
-    info: Info
+    metadata: MetadataDto
+    info: InfoDto

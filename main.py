@@ -15,11 +15,9 @@ if __name__ == '__main__':
     api_key = get_config('apikey')
     response = con.get_match("EUW1_6309535507", api_key)
 
-    print(response['info'])
-
     my_match = from_dict(data_class=lol.MatchDto, data=response)
 
-    print(type(my_match))
+    print("\n", type(my_match), "\n")
 
     """
     with open('development/example.json') as file:

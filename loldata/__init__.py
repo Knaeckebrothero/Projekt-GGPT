@@ -1,1 +1,1 @@
-from loldata.data.match import MatchDto
+from loldata.data.match_dto import MatchDto
