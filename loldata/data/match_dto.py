@@ -2,8 +2,8 @@
 This dataclass represents a MatchDto.
 GET -- /lol/match/v5/matches/{matchId}
 
-Product -- GetGood.GG
-https://github.com/Knaeckebrothero/Projekt-GetGood.GG
+Product -- GGPT
+https://github.com/Knaeckebrothero/Projekt-GGPT
 App ID -- 616160
 https://developer.riotgames.com/
 """

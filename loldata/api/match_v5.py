@@ -1,24 +1,15 @@
 """
 This module handles the communication with the riotgames api.
 
-Product -- GetGood.GG
-https://github.com/Knaeckebrothero/Projekt-GetGood.GG
+Product -- GGPT
+https://github.com/Knaeckebrothero/Projekt-GGPT
 App ID -- 616160
 https://developer.riotgames.com/
 """
-import json
 
 import requests as rq
 from dacite import from_dict
 from loldata import MatchDto
-
-
-# Gets the puuid by summoner name
-def get_puuid(name: str, api_key: str):
-    response = rq.get(
-        "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}".format(name),
-        headers={"X-Riot-Token": api_key})
-    return response.json()["puuid"]
 
 
 # Gets a list of match ids, by puuid

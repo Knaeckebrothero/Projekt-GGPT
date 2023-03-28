@@ -1,8 +1,8 @@
 """
 This is a script to load matches from the riot api into the database.
 
-Product -- GetGood.GG
-https://github.com/Knaeckebrothero/Projekt-GetGood.GG
+Product -- GGPT
+https://github.com/Knaeckebrothero/Projekt-GGPT
 App ID -- 616160
 https://developer.riotgames.com/
 """
@@ -11,7 +11,7 @@ import logging
 import traceback
 from development.get_credentials import read_config
 from database.database import Database
-from loldata import api_controller as api
+from loldata.api import match_v5 as api
 
 # Basic configuration for logging.
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")

@@ -1,8 +1,8 @@
 """
 This module handles the communication with the applications database.
 
-Product -- GetGood.GG
-https://github.com/Knaeckebrothero/Projekt-GetGood.GG
+Product -- GGPT
+https://github.com/Knaeckebrothero/Projekt-GGPT
 App ID -- 616160
 https://developer.riotgames.com/
 """
@@ -21,17 +21,21 @@ def _divide_chunks(mylist: list, chunksize: int):
         yield mylist[i:i + chunksize]
 
 
+# Defines a custom logger, login into a log file.
+def configure_custom_logger():
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler = logging.FileHandler("../development/db.log")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(read_config('loggingLevel'))
+    return logger
+
+
 # Class containing all the attributes and methods used to communicate with the database.
 class Database:
-    # Defines a custom logger, login into a log file.
-    _logger = logging.getLogger(__name__)
-    handler = logging.FileHandler("../logs/db.log")
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    _logger.addHandler(handler)
-    _logger.setLevel(read_config('loggingLevel'))
-
     def __init__(self, role: str, password: str):
+        self._logger = configure_custom_logger()
         self._logger.log(10, 'Connecting...')
         self._client = pymongo.MongoClient("mongodb+srv://{}:{}@projekt-analysistool.pfdmf3o."
                                            "mongodb.net/" "?retryWrites=true&w=majority"
