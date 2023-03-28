@@ -1,7 +1,11 @@
 """
-Dataclass representing a MatchDto.
+This dataclass represents a MatchTimelineDto.
+GET -- /lol/match/v5/matches/{matchId}/timeline
 
-https://developer.riotgames.com/apis#match-v5/GET_getTimeline
+Product -- GetGood.GG
+https://github.com/Knaeckebrothero/Projekt-GetGood.GG
+App ID -- 616160
+https://developer.riotgames.com/
 """
 
 from dataclasses import dataclass
@@ -176,6 +180,7 @@ class MetadataDto:
     participants: List[str]
 
 
+# Main dataclass containing the other classes.
 @dataclass
 class MatchTimelineDto:
     metadata: MetadataDto
