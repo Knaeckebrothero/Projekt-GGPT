@@ -1,5 +1,5 @@
 """
-This is a script to load matches from the riot api into the database.
+This is a script to loads match data from the riot api into the database.
 
 Product -- GGPT
 https://github.com/Knaeckebrothero/Projekt-GGPT
