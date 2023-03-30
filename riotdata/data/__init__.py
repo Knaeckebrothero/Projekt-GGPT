@@ -1,5 +1,5 @@
 """
-This subpackage holds dataclasses belonging to the riot games api responses.
+This subpackage holds dataclasses belonging to the riot games apis responses.
 https://developer.riotgames.com/apis
 
 Product -- GGPT

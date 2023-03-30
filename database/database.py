@@ -15,7 +15,7 @@ from development.get_credentials import read_config
 
 
 # Splits a list into smaller lists
-def _divide_chunks(mylist: list, chunksize: int):
+def divide_chunks(mylist: list, chunksize: int):
     # Loops till length of mylist
     for i in range(0, len(mylist), chunksize):
         yield mylist[i:i + chunksize]
@@ -25,7 +25,7 @@ def _divide_chunks(mylist: list, chunksize: int):
 def configure_custom_logger():
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler = logging.FileHandler("../development/db.log")
+    handler = logging.FileHandler("./development/db.log")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(read_config('loggingLevel'))
@@ -36,17 +36,11 @@ def configure_custom_logger():
 class Database:
     def __init__(self, role: str, password: str):
         self._logger = configure_custom_logger()
-        self._logger.log(10, 'Connecting...')
         self._client = pymongo.MongoClient("mongodb+srv://{}:{}@projekt-analysistool.pfdmf3o."
                                            "mongodb.net/" "?retryWrites=true&w=majority"
                                            .format(role, password, server_api=ServerApi('1')))
-        self._database = self._client['loldata']
-        self._logger.log(10, 'Connected')
-
-    def __del__(self):
-        self._logger.log(10, 'Closing connection...')
-        self._client.close()
-        self._logger.log(10, 'Connection closed')
+        self._database = self._client['riotdata']
+        self._logger.log(10, 'Connection established, class initiated')
 
     def retrieve_match_ids(self):
         pass
@@ -71,7 +65,7 @@ class Database:
         # Checks if the list needs to be chunked
         col = self._database[collection]
         if len(list_dicts) > 25:
-            for chunk in _divide_chunks(list_dicts, 25):
+            for chunk in divide_chunks(list_dicts, 25):
                 self._logger.log(10, 'Inserting 25 objects...')
                 col.insert_many(chunk)
                 self._logger.log(10, 'Objects inserted')

@@ -1,5 +1,5 @@
 """
-This subpackage handles the communication with the riotgames api.
+This subpackage handles the communication with the riotgames apis.
 https://developer.riotgames.com/apis
 
 Product -- GGPT

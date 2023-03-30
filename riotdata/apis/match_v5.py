@@ -1,5 +1,5 @@
 """
-This module handles the communication with the riotgames api.
+This module handles the communication with the riotgames apis.
 https://developer.riotgames.com/apis#match-v5
 
 Product -- GGPT
@@ -10,8 +10,8 @@ https://developer.riotgames.com/
 
 import requests as rq
 from dacite import from_dict
-from loldata import MatchDto
-from loldata import MatchTimelineDto
+from riotdata import MatchDto
+from riotdata import MatchTimelineDto
 
 
 # Get match ids
@@ -23,7 +23,7 @@ def get_match_ids(puuid: str, start: int, count: int, api_key: str):
                 puuid (str): The puuid of the player.
                 start (int): The index where to start.
                 count (int): Number of matches to retrieve, up to 100.
-                api_key (str): The api key.
+                api_key (str): The apis key.
 
             Returns:
                 response (dict): Returns a dictionary with the statuscode (int)
@@ -41,7 +41,7 @@ def get_match(match_id: str, api_key: str):
 
             Args:
                 match_id (str): The match id.
-                api_key (str): The api key.
+                api_key (str): The apis key.
 
             Returns:
                 response (dict): Returns a dictionary with the statuscode (int)
@@ -60,7 +60,7 @@ def get_match_timeline(match_id: str, api_key: str):
 
             Args:
                 match_id (str): The match id.
-                api_key (str): The api key.
+                api_key (str): The apis key.
 
             Returns:
                 response (dict): Returns a dictionary with the statuscode (int)
