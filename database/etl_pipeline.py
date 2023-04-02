@@ -7,16 +7,15 @@ App ID -- 616160
 https://developer.riotgames.com/
 """
 
-import logging
-import traceback
 from development.development_functions import read_config, configure_custom_logger
 from database.database import Database
 from riotdata.api_controller import ApiController
-from riotdata.apis import match_v5 as api
 
 
 # Load matches into db
-def load_matches(controller: ApiController, database: Database, summoner_name: str, server: str,
+def load_matches(controller: ApiController, database: Database,
+                 summoner_name: str,
+                 server: str,
                  champion: str = None, start_time: float = 1672444800):
     """
         This function gets MatchDtos from the riot games api and saves them in the database.
@@ -30,16 +29,24 @@ def load_matches(controller: ApiController, database: Database, summoner_name: s
             start_time (float): Optional epoch timestamp used for filtering.
     """
     # Declare variables
-    logger = configure_custom_logger(__name__)
+    logger = configure_custom_logger(module_name=__name__,
+                                     console_level=int(read_config('loggingLevel')),
+                                     logging_directory=read_config('loggingDirectory'))
     puuid = controller.get_puuid(summoner_name, server)
     start = 0
     done = False
     matches = []
     match_count = 0
 
+    # Info log
+    if champion:
+        logger.info(f"Running etl for {summoner_name}, {server}, {champion}")
+    else:
+        logger.info(f"Running etl for {summoner_name}, {server}")
+
     # Haven't fully tested the mapping yet xD
     match server:
-        case 'br1':
+        case 'br1':  # Valid
             server = 'americas'
         case 'eun1':
             server = 'europe'
@@ -72,6 +79,7 @@ def load_matches(controller: ApiController, database: Database, summoner_name: s
 
     # Check if getting the puuid worked.
     if puuid[0] == 200:
+        logger.debug('Got puuid, looking for match ids...')
 
         # Loop until the api returns an empty list.
         while not done:
@@ -81,28 +89,29 @@ def load_matches(controller: ApiController, database: Database, summoner_name: s
                 puuid=puuid[1], start=start, server=server, start_time=start_time)
 
             if match_ids[0] == 200:
-
                 # Check if the server returned any matches.
                 if len(match_ids[1]) > 0:
+                    logger.debug('Got match ids, loading matches...')
 
                     # Iterate and cache existing matches.
-                    for match_id in match_ids:
+                    for match_id in match_ids[1]:
                         request = controller.get_match(match_id, server)
                         if request[0] == 200:
+                            logger.debug('Caching match...')
                             matches.append(request[1])
                             match_count = match_count + 1
 
                     # Insert matches into database.
+                    logger.debug('Inserting matches into db...')
                     database.insert_data(matches, 'matchDto')
 
                     # Up the count match count.
                     start = start + 100
                 else:
-                    logger.info(f'No more matches to load, {match_count} matches retrived')
+                    logger.info(f'No more matches to load, {match_count} matches loaded')
                     done = True
             else:
-                logger.error(f'Something went wrong while getting the match ids')
+                logger.error(f'Something went wrong while getting the match ids, status :{match_ids[0]}')
                 done = True
     else:
-        logger.error('Something went wrong while getting the puuid')
-    return
+        logger.error(f'Something went wrong while getting puuid, status :{puuid[0]}')

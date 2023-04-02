@@ -6,22 +6,24 @@ https://github.com/Knaeckebrothero/Projekt-GGPT
 App ID -- 616160
 https://developer.riotgames.com/
 """
-from development.development_functions import read_config, configure_custom_logger
+from development.development_functions import read_config, configure_custom_logger, get_player_data
 from database.database import Database
 from riotdata.api_controller import ApiController
 from database import etl_pipeline as etl
 
 # Main function
 if __name__ == '__main__':
-    # Instantiate api controller and database tunnel
+    # Instantiate api controller and database tunnel, confire logger.
     controller = ApiController(read_config('apikey'))
     database = Database('admin', read_config('dbAdmin'))
-    logger = configure_custom_logger(__name__)
+    logger = configure_custom_logger(module_name=__name__,
+                                     console_level=int(read_config('loggingLevel')),
+                                     logging_directory=read_config('loggingDirectory'))
 
-    players = ['TTV King Fidd', 'ShadowaIk', '9년의 공백', 'Kouwae']
-    servers = ['na1', 'na1', 'kr', 'br1']
+    # Load data keys
+    players, servers = get_player_data(['players', 'servers'])
 
-    for i in range(4):
+    for i in range(3):
         etl.load_matches(
             controller=controller, database=database, summoner_name=players[i], server=servers[i])
-        logger.info(f"Player {i} has been completed!")
+        logger.info(f"Player {i} has been completed")

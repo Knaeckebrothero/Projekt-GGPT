@@ -6,7 +6,7 @@ https://github.com/Knaeckebrothero/Projekt-GGPT
 App ID -- 616160
 https://developer.riotgames.com/
 """
-import logging
+
 import pymongo
 from pymongo.server_api import ServerApi
 from dataclasses import asdict
@@ -24,16 +24,20 @@ class Database:
     """
         Class containing all the attributes and methods used to communicate with the database.
     """
+
     def __init__(self, role: str, password: str):
         """
         Args:
             role (str): Login credentials, Admin for example
             password (str): Login credentials
         """
-        self._logger = configure_custom_logger(__name__)
+        self._logger = configure_custom_logger(module_name=__name__,
+                                               console_level=int(read_config('loggingLevel')),
+                                               logging_directory=read_config('loggingDirectory'))
         self._client = pymongo.MongoClient(
             read_config('dbConnectionString').format(role, password, server_api=ServerApi('1')))
         self._database = self._client[read_config('database')]
+        self._logger.debug("Class initialized")
 
     # Insert dataclasses
     def insert_data(self, data_objects: list[object], collection: str) -> bool:
@@ -47,9 +51,12 @@ class Database:
         Returns:
             successful (bool): Returns True if the operation was successful and False if not.
         """
+        # Info log
+        self._logger.info(f"Received {len(data_objects)} objects to be inserted into {collection}")
+
         # Check if database collection exists
         if collection not in self._database.list_collection_names():
-            self._logger.log(30, f'Collection {collection} does not exist on selected database')
+            self._logger.error(f'Collection {collection} does not exist on selected database')
             return False
 
         # Variables
@@ -58,23 +65,34 @@ class Database:
         list_dicts = []
 
         # Converts the dataclasses to dictionaries before inserting them into the database.
-        self._logger.log(10, 'Converting objects into dictionarys...')
         for data_object in data_objects:
             # Checks if all objects are of the same type
             if not type(data_object) == dataclass_type:
-                self._logger.log(30, 'List contains objects of different types')
+                self._logger.error('List contains objects of different types')
                 return False
             # Convert and append object
+            self._logger.debug("Converting dataclass to dic...")
             list_dicts.append(asdict(data_object))
 
-        # Checks if list needs to be chunked
+        # Checks if list needs to be chunked and inserts data.
         if len(list_dicts) > 25:
             for chunk in divide_chunks(list_dicts, 25):
-                self._logger.log(10, 'Inserting 25 objects...')
-                col.insert_many(chunk)
+                self._logger.debug('Inserting 25 objects...')
+                try:
+                    col.insert_many(chunk)
+                except BaseException as e:
+                    self._logger.error(f'Error inserting data into db, exception{e}')
+                    return False
         else:
-            self._logger.log(10, 'Inserting objects...')
-            col.insert_many(list_dicts)
+            self._logger.debug('Inserting objects...')
+            try:
+                col.insert_many(list_dicts)
+            except BaseException as e:
+                self._logger.error(f'Error inserting data into db, exception{e}')
+                return False
+
+        # If no errors occurred function returns true.
+        self._logger.info("All data objects inserted successfully")
         return True
 
     # Retrieve dataclasses

@@ -10,7 +10,7 @@ https://developer.riotgames.com/
 
 import time
 from dacite import from_dict
-from development.development_functions import configure_custom_logger
+from development.development_functions import configure_custom_logger, read_config
 from riotdata import MatchDto, MatchTimelineDto
 from riotdata.apis import summoner_v4 as summoner
 from riotdata.apis import match_v5 as match
@@ -26,14 +26,18 @@ class ApiController:
             Args:
                 api_key (str): The projects api key.
         """
-        self._logger = configure_custom_logger(__name__)
+        self._logger = configure_custom_logger(module_name=__name__,
+                                               console_level=int(read_config('loggingLevel')),
+                                               logging_directory=read_config('loggingDirectory'))
         self.api_key = api_key
         self.rate_limits = {1: 20, 120: 100}
         self.rate_limit_counts = {1: 0, 120: 0}
         self.rate_limit_last_updated = {1: time.time(), 120: time.time()}
+        self._logger.debug("Class initialized")
 
     # Resets rate limit counts if the duration has passed.
     def _reset_rate_limit_counts(self):
+        self._logger.debug("Resetting rate count")
         current_time = time.time()
         for duration in self.rate_limits:
             if current_time - self.rate_limit_last_updated[duration] > duration:
@@ -42,12 +46,13 @@ class ApiController:
 
     # Wait before making a request if rate limits have been reached.
     def _wait_if_needed(self):
+        self._logger.debug("Checking rate limits")
         for duration in self.rate_limits:
             if self.rate_limit_counts[duration] >= self.rate_limits[duration]:
-                # Due to the experience of micro lag i´ve added a 0.1 second buffer.
-                time_to_wait = duration - (time.time() - self.rate_limit_last_updated[duration]) + 0.1
+                # Due to the experience of micro lag i´ve added 200ms buffer.
+                time_to_wait = duration - (time.time() - self.rate_limit_last_updated[duration]) + 0.2
                 if time_to_wait > 0:
-                    self._logger.log(20, f'Waiting {time_to_wait} seconds to stay within api rate limits')
+                    self._logger.debug(f'Waiting {time_to_wait} seconds...')
                     time.sleep(time_to_wait)
                 self.rate_limit_counts[duration] = 0
                 self.rate_limit_last_updated[duration] = time.time()
@@ -69,7 +74,10 @@ class ApiController:
         self._wait_if_needed()
 
         # Make api call
+        self._logger.info(f"Calling get_summoner_by_name, name:{summoner_name}, server:{server}")
         response = summoner.get_summoner_by_name(self.api_key, summoner_name, server)
+        if response.status_code != 200:
+            self._logger.warning(f"Response, status:{response.status_code}, msg:{response.json()}")
 
         # Update rate_limit_counts
         for duration in self.rate_limits:
@@ -79,8 +87,7 @@ class ApiController:
         if response.status_code == 200:
             return (response.status_code, response.json()["puuid"])
         else:
-            self._logger.log(30, f'Failed requesting puuid, summoner name: {summoner_name}, '
-                                 f'status: {response.status_code}')
+            self._logger.warning(f'Failed requesting puuid for: {summoner_name}')
             return (response.status_code, None)
 
     # Get match ids
@@ -103,9 +110,12 @@ class ApiController:
         self._wait_if_needed()
 
         # Make api call
+        self._logger.info(f"Calling get_match_ids_by_puuid, puuid:{puuid}, server:{server}")
         response = match.get_match_ids_by_puuid(
             api_key=self.api_key, puuid=puuid, start=start, match_type='ranked',
             count=100, server=server, start_time=start_time)
+        if response.status_code != 200:
+            self._logger.warning(f"Response, status:{response.status_code}, msg:{response.json()}")
 
         # Update rate_limit_counts
         for duration in self.rate_limits:
@@ -115,8 +125,7 @@ class ApiController:
         if response.status_code == 200:
             return (response.status_code, list(response.json()))
         else:
-            self._logger.log(30, f'Failed requesting match ids, puuid: {puuid}, '
-                                 f'status: {response.status_code}')
+            self._logger.warning(f'Failed requesting match ids, puuid: {puuid}')
             return (response.status_code, None)
 
     # Get match
@@ -136,7 +145,10 @@ class ApiController:
         self._wait_if_needed()
 
         # Make api call
+        self._logger.info(f"Calling get_match, match id:{match_id}, server:{server}")
         response = match.get_match(self.api_key, match_id, server)
+        if response.status_code != 200:
+            self._logger.warning(f"Response, status:{response.status_code}, msg:{response.json()}")
 
         # Update rate_limit_counts
         for duration in self.rate_limits:
@@ -146,7 +158,7 @@ class ApiController:
         if response.status_code == 200:
             return (response.status_code, from_dict(data_class=MatchDto, data=response.json()))
         else:
-            self._logger.log(30, f'Failed requesting match, id: {match_id}, status: {response.status_code}')
+            self._logger.warning(f'Failed requesting match, id:{match_id}')
             return (response.status_code, None)
 
     # Get match timeline
@@ -167,7 +179,10 @@ class ApiController:
         self._wait_if_needed()
 
         # Make api call
-        response = match.get_match(self.api_key, match_id, server)
+        self._logger.info(f"Calling get_match_timeline, match id:{match_id}, server:{server}")
+        response = match.get_match_timeline(self.api_key, match_id, server)
+        if response.status_code != 200:
+            self._logger.warning(f"Response, status:{response.status_code}, msg:{response.json()}")
 
         # Update rate_limit_counts
         for duration in self.rate_limits:
@@ -177,6 +192,5 @@ class ApiController:
         if response.status_code == 200:
             return (response.status_code, from_dict(data_class=MatchTimelineDto, data=response.json()))
         else:
-            self._logger.log(30, f'Failed requesting match timeline, id: {match_id}, '
-                                 f'status: {response.status_code}')
+            self._logger.warning(f'Failed requesting match timeline, id:{match_id}')
             return (response.status_code, None)

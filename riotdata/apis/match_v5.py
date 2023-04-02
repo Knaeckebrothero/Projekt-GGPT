@@ -24,7 +24,7 @@ def get_match_ids_by_puuid(
         server: str = 'europe',
         start_time: float = 1672444800) -> requests.models.Response:
     return requests.get(
-        "https://{}.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?startTime={}&type={}start={}&count={}"
+        "https://{}.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?startTime={}&type={}&start={}&count={}"
         .format(server, puuid, start_time, match_type, start, count), headers={"X-Riot-Token": api_key})
 
 
