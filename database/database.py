@@ -22,7 +22,7 @@ def divide_chunks(mylist: list, chunk_size: int):
 # Primary database class
 class Database:
     """
-        Class containing all the attributes and methods used to communicate with the database.
+    Class containing all the attributes and methods used to communicate with the database.
     """
 
     def __init__(self, role: str, password: str):
@@ -39,60 +39,47 @@ class Database:
         self._database = self._client[read_config('database')]
         self._logger.debug("Class initialized")
 
-    # Insert dataclasses
-    def insert_data(self, data_objects: list[object], collection: str) -> bool:
+    # Insert dictionary
+    def insert_data(self, data_dicts: list[dict], collection: str) -> bool:
         """
         This function inserts a list of dataclasses into the database.
 
         Args:
-            data_objects (list[object]): A list containing dataclass objects to be inserted.
-            collection (str): Name of the database collection in which to insert the data objects.
+            data_dicts (list[object]): A list containing dataclass objects to be inserted.
+            collection (str): Name of the database collection in which to insert the dataprocessing objects.
 
         Returns:
             successful (bool): Returns True if the operation was successful and False if not.
         """
         # Info log
-        self._logger.info(f"Received {len(data_objects)} objects to be inserted into {collection}")
+        self._logger.info(f"Received {len(data_dicts)} objects to be inserted into {collection}")
 
         # Check if database collection exists
         if collection not in self._database.list_collection_names():
             self._logger.error(f'Collection {collection} does not exist on selected database')
             return False
+        else:
+            col = self._database[collection]
 
-        # Variables
-        col = self._database[collection]
-        dataclass_type = type(data_objects[0])
-        list_dicts = []
-
-        # Converts the dataclasses to dictionaries before inserting them into the database.
-        for data_object in data_objects:
-            # Checks if all objects are of the same type
-            if not type(data_object) == dataclass_type:
-                self._logger.error('List contains objects of different types')
-                return False
-            # Convert and append object
-            self._logger.debug("Converting dataclass to dic...")
-            list_dicts.append(asdict(data_object))
-
-        # Checks if list needs to be chunked and inserts data.
-        if len(list_dicts) > 25:
-            for chunk in divide_chunks(list_dicts, 25):
+        # Checks if list needs to be chunked and inserts dataprocessing.
+        if len(data_dicts) > 25:
+            for chunk in divide_chunks(data_dicts, 25):
                 self._logger.debug('Inserting 25 objects...')
                 try:
                     col.insert_many(chunk)
                 except BaseException as e:
-                    self._logger.error(f'Error inserting data into db, exception{e}')
+                    self._logger.error(f'Error inserting dataprocessing into db, exception{e}')
                     return False
         else:
             self._logger.debug('Inserting objects...')
             try:
-                col.insert_many(list_dicts)
+                col.insert_many(data_dicts)
             except BaseException as e:
-                self._logger.error(f'Error inserting data into db, exception{e}')
+                self._logger.error(f'Error inserting dataprocessing into db, exception{e}')
                 return False
 
         # If no errors occurred function returns true.
-        self._logger.info("All data objects inserted successfully")
+        self._logger.info("All dataprocessing objects inserted successfully")
         return True
 
     # Retrieve dataclasses

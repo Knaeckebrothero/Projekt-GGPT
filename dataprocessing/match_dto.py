@@ -205,7 +205,7 @@ class MetadataDto:
     participants: List[str]
 
 
-# Primary data class using the other classes.
+# Primary dataprocessing class using the other classes.
 @dataclass
 class MatchDto:
     metadata: MetadataDto

@@ -18,7 +18,7 @@ def read_config(key: str) -> str:
 
 # Retrieve a list from a yaml file.
 def get_player_data(keys: list[str]) -> tuple:
-    with open('./development/data.yaml', 'r') as file:
+    with open('./development/dataprocessing.yaml', 'r') as file:
         yaml_data = yaml.safe_load(file)
         result = tuple()
         for k in keys:

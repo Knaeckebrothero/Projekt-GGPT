@@ -8,7 +8,7 @@ https://developer.riotgames.com/
 """
 from development.development_functions import read_config, configure_custom_logger, get_player_data
 from database.database import Database
-from riotdata.api_controller import ApiController
+from riotapi.api_controller import ApiController
 from database import etl_pipeline as etl
 
 # Main function
@@ -20,10 +20,11 @@ if __name__ == '__main__':
                                      console_level=int(read_config('loggingLevel')),
                                      logging_directory=read_config('loggingDirectory'))
 
-    # Load data keys
+    # Load data processing keys
     players, servers = get_player_data(['players', 'servers'])
 
     for i in range(3):
         etl.load_matches(
             controller=controller, database=database, summoner_name=players[i], server=servers[i])
         logger.info(f"Player {i} has been completed")
+        print('\n\n')

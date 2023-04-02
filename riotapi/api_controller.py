@@ -9,22 +9,21 @@ https://developer.riotgames.com/
 """
 
 import time
-from dacite import from_dict
+
 from development.development_functions import configure_custom_logger, read_config
-from riotdata import MatchDto, MatchTimelineDto
-from riotdata.apis import summoner_v4 as summoner
-from riotdata.apis import match_v5 as match
+from riotapi.apis import summoner_v4 as summoner
+from riotapi.apis import match_v5 as match
 
 
 # Primary api controller class
 class ApiController:
     """
-        Class containing all the attributes and methods used to communicate with the riot games api.
+    Class containing all the attributes and methods used to communicate with the riot games api.
     """
     def __init__(self, api_key: str):
         """
-            Args:
-                api_key (str): The projects api key.
+        Args:
+            api_key (str): The projects api key.
         """
         self._logger = configure_custom_logger(module_name=__name__,
                                                console_level=int(read_config('loggingLevel')),
@@ -58,16 +57,16 @@ class ApiController:
                 self.rate_limit_last_updated[duration] = time.time()
 
     # Get puuid
-    def get_puuid(self, summoner_name: str, server: str = 'euw1') -> tuple:
+    def get_puuid(self, summoner_name: str, server: str = 'euw1') -> str | None:
         """
-            This function gets the puuid of a player from a SummonerDTO.
+        This function gets the puuid of a player from a SummonerDTO.
 
-            Args:
-                summoner_name (str): The player's summoner name.
-                server (str): Server which the summoner is registered on.
+        Args:
+            summoner_name (str): The player's summoner name.
+            server (str): Server which the summoner is registered on.
 
-            Returns:
-                tuple (int, str): The status code and if the request was successful, the puuid.
+        Returns:
+            tuple (int, str): The status code and if the request was successful, the puuid.
         """
         # Call limiter functions to stay within api rate limitations.
         self._reset_rate_limit_counts()
@@ -85,25 +84,25 @@ class ApiController:
 
         # Return results
         if response.status_code == 200:
-            return (response.status_code, response.json()["puuid"])
+            return response.json()["puuid"]
         else:
             self._logger.warning(f'Failed requesting puuid for: {summoner_name}')
-            return (response.status_code, None)
+            return None
 
     # Get match ids
     def get_match_ids(
-            self, puuid: str, start: int, server: str = 'europe', start_time: float = 1672444800) -> tuple:
+            self, puuid: str, start: int, server: str = 'europe', start_time: float = 1672444800) -> list[str] | None:
         """
-                This function gets a list of up to 100 match ids.
+        This function gets a list of up to 100 match ids.
 
-                Args:
-                    puuid (str): The puuid of the player.
-                    start (int): The index where to start.
-                    server (str): Server which the matches have been played on.
-                    start_time (float): Epoch timestamp used for filtering.
+        Args:
+            puuid (str): The puuid of the player.
+            start (int): The index where to start.
+            server (str): Server which the matches have been played on.
+            start_time (float): Epoch timestamp used for filtering.
 
-                Returns:
-                    tuple (int, list[str]) : The status code and if the request was successful, the match ids.
+        Returns:
+            tuple (int, list[str]) : The status code and if the request was successful, the match ids.
         """
         # Call limiter functions to stay within api rate limitations.
         self._reset_rate_limit_counts()
@@ -123,22 +122,22 @@ class ApiController:
 
         # Return results
         if response.status_code == 200:
-            return (response.status_code, list(response.json()))
+            return list(response.json())
         else:
             self._logger.warning(f'Failed requesting match ids, puuid: {puuid}')
-            return (response.status_code, None)
+            return None
 
     # Get match
-    def get_match(self, match_id: str, server: str = 'europe') -> tuple:
+    def get_match(self, match_id: str, server: str = 'europe') -> dict | None:
         """
-                This function gets a MatchDto.
+        This function gets a MatchDto.
 
-                Args:
-                    match_id (str): Id of the match.
-                    server (str): Server which the matches have been played on.
+        Args:
+            match_id (str): Id of the match.
+            server (str): Server which the matches have been played on.
 
-                Returns:
-                    tuple (int, MatchDto) : The status code and if the request was successful, the MatchDto.
+        Returns:
+            response.json() (dict): If the request was successful returns a matchDto, if not returns None.
         """
         # Call limiter functions to stay within api rate limitations.
         self._reset_rate_limit_counts()
@@ -156,23 +155,23 @@ class ApiController:
 
         # Return results
         if response.status_code == 200:
-            return (response.status_code, from_dict(data_class=MatchDto, data=response.json()))
+            return response.json()
         else:
             self._logger.warning(f'Failed requesting match, id:{match_id}')
-            return (response.status_code, None)
+            return None
 
     # Get match timeline
-    def get_match_timeline(self, match_id: str, server: str = 'europe') -> tuple:
+    def get_match_timeline(self, match_id: str, server: str = 'europe') -> dict | None:
         """
-                This function gets a MatchTimelineDto.
+        This function gets a MatchTimelineDto.
 
-                Args:
-                    match_id (str): Id of the match.
-                    server (str): Server which the matches have been played on.
+        Args:
+            match_id (str): Id of the match.
+            server (str): Server which the matches have been played on.
 
-                Returns:
-                    tuple (int, MatchTimelineDto) : The status code and if the request was successful,
-                    the MatchTimelineDto.
+        Returns:
+            response.json() (dict): If the request was successful returns a matchTimelineDto,
+            if not returns None.
         """
         # Call limiter functions to stay within api rate limitations.
         self._reset_rate_limit_counts()
@@ -190,7 +189,7 @@ class ApiController:
 
         # Return results
         if response.status_code == 200:
-            return (response.status_code, from_dict(data_class=MatchTimelineDto, data=response.json()))
+            return response.json()
         else:
             self._logger.warning(f'Failed requesting match timeline, id:{match_id}')
-            return (response.status_code, None)
+            return None
