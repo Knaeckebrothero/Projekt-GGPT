@@ -1,4 +1,6 @@
+development/
 development/config.yaml
+development/data.yaml
 
 .idea
 .idea/workspace.xml
