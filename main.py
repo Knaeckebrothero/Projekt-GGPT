@@ -20,7 +20,7 @@ if __name__ == '__main__':
                                      console_level=int(read_config('loggingLevel')),
                                      logging_directory=read_config('loggingDirectory'))
 
-    # Load dataprocessing keys
+    # Load data processing keys
     players, servers = get_player_data(['players', 'servers'])
 
     for i in range(3):
