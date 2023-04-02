@@ -1,6 +1,6 @@
 """
 This dataclass represents a MatchDto.
-GET -- /lol/match/v5/matches/{matchId}
+https://developer.riotgames.com/apis
 
 Product -- GGPT
 https://github.com/Knaeckebrothero/Projekt-GGPT
@@ -205,7 +205,7 @@ class MetadataDto:
     participants: List[str]
 
 
-# Main dataclass containing the other classes.
+# Primary data class using the other classes.
 @dataclass
 class MatchDto:
     metadata: MetadataDto

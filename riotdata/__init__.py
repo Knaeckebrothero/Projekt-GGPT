@@ -1,5 +1,6 @@
 """
-This package focuses on handling and working with data from the riot games apis.
+This package focuses on working and handling data from the riot games api.
+https://developer.riotgames.com/apis
 
 Product -- GGPT
 https://github.com/Knaeckebrothero/Projekt-GGPT

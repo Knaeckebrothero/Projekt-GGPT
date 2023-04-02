@@ -1,5 +1,5 @@
 """
-This module handles the communication with the riotgames apis.
+This module holds riot games apis belonging to the match category.
 https://developer.riotgames.com/apis#match-v5
 
 Product -- GGPT
@@ -8,65 +8,36 @@ App ID -- 616160
 https://developer.riotgames.com/
 """
 
-import requests as rq
+import requests
 from dacite import from_dict
 from riotdata import MatchDto
 from riotdata import MatchTimelineDto
 
 
-# Get match ids
-def get_match_ids(puuid: str, start: int, count: int, api_key: str):
-    """
-            This gets match ids by puuid.
-
-            Args:
-                puuid (str): The puuid of the player.
-                start (int): The index where to start.
-                count (int): Number of matches to retrieve, up to 100.
-                api_key (str): The apis key.
-
-            Returns:
-                response (dict): Returns a dictionary with the statuscode (int)
-                and match ids (list).
-    """
-    response = rq.get("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/"
-                      "ids?start={}&count={}".format(puuid, start, count), headers={"X-Riot-Token": api_key})
-    return {'status': response.status_code, 'body': response.json()}
+# Get a list of match ids by puuid.
+def get_match_ids_by_puuid(
+        api_key: str,
+        puuid: str,
+        start: int,
+        match_type: str = 'ranked',
+        count: int = 100,
+        server: str = 'europe',
+        start_time: float = 1672444800) -> requests.models.Response:
+    return requests.get(
+        "https://{}.api.riotgames.com/lol/match/v5/matches/by-puuid/{}/ids?startTime={}&type={}start={}&count={}"
+        .format(server, puuid, start_time, match_type, start, count), headers={"X-Riot-Token": api_key})
 
 
-# Get match
-def get_match(match_id: str, api_key: str):
-    """
-            This gets a match by match id.
-
-            Args:
-                match_id (str): The match id.
-                api_key (str): The apis key.
-
-            Returns:
-                response (dict): Returns a dictionary with the statuscode (int)
-                and a match (MatchDto).
-    """
-    response = rq.get("https://europe.api.riotgames.com/lol/match/v5/matches/{}".format(match_id),
-                      headers={"X-Riot-Token": api_key})
-    return {'status': response.status_code,
-            'match': from_dict(data_class=MatchDto, data=response.json())}
+# Get a match by match id.
+def get_match(api_key: str, match_id: str, server: str = 'europe') -> requests.models.Response:
+    return requests.get(
+        "https://{}.api.riotgames.com/lol/match/v5/matches/{}"
+        .format(server, match_id), headers={"X-Riot-Token": api_key})
 
 
-# Get match timeline
-def get_match_timeline(match_id: str, api_key: str):
-    """
-            This gets a matchs timeline by match id.
-
-            Args:
-                match_id (str): The match id.
-                api_key (str): The apis key.
-
-            Returns:
-                response (dict): Returns a dictionary with the statuscode (int)
-                and a timeline (MatchTimelineDto).
-    """
-    response = rq.get("https://europe.api.riotgames.com/lol/match/v5/matches/{}/timeline"
-                      .format(match_id), headers={"X-Riot-Token": api_key})
-    return {'status': response.status_code,
-            'timeline': from_dict(data_class=MatchTimelineDto, data=response.json())}
+# Get a match timeline by match id.
+def get_match_timeline(
+        api_key: str, match_id: str, server: str = 'europe') -> requests.models.Response:
+    return requests.get(
+        "https://{}.api.riotgames.com/lol/match/v5/matches/{}/timeline"
+        .format(server, match_id), headers={"X-Riot-Token": api_key})

@@ -1,100 +1,182 @@
-import logging
+"""
+This module contains the controller class which handles the communication with the riot games apis.
+https://developer.riotgames.com/apis
+
+Product -- GGPT
+https://github.com/Knaeckebrothero/Projekt-GGPT
+App ID -- 616160
+https://developer.riotgames.com/
+"""
+
 import time
-from development.get_credentials import read_config
-from riotdata.apis import summoner_v4
+from dacite import from_dict
+from development.development_functions import configure_custom_logger
+from riotdata import MatchDto, MatchTimelineDto
+from riotdata.apis import summoner_v4 as summoner
+from riotdata.apis import match_v5 as match
 
 
-# Defines a custom logger, login into a log file.
-def configure_custom_logger():
-    logger = logging.getLogger(__name__)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler = logging.FileHandler("./development/api.log")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(read_config('loggingLevel'))
-    return logger
-
-
+# Primary api controller class
 class ApiController:
+    """
+        Class containing all the attributes and methods used to communicate with the riot games api.
+    """
     def __init__(self, api_key: str):
-        self._logger = configure_custom_logger()
-        self.api_key = api_key
-        self.last_request_time = 0
-        self.last_minute_request_time = 0
-        self._logger.log(10, 'Class initiated')
-
-    # Extract rate info
-    @staticmethod
-    def _parse_headers(response_headers):
         """
-            This function extracts the rate limit and count from a request headers field.
+            Args:
+                api_key (str): The projects api key.
+        """
+        self._logger = configure_custom_logger(__name__)
+        self.api_key = api_key
+        self.rate_limits = {1: 20, 120: 100}
+        self.rate_limit_counts = {1: 0, 120: 0}
+        self.rate_limit_last_updated = {1: time.time(), 120: time.time()}
+
+    # Resets rate limit counts if the duration has passed.
+    def _reset_rate_limit_counts(self):
+        current_time = time.time()
+        for duration in self.rate_limits:
+            if current_time - self.rate_limit_last_updated[duration] > duration:
+                self.rate_limit_counts[duration] = 0
+                self.rate_limit_last_updated[duration] = current_time
+
+    # Wait before making a request if rate limits have been reached.
+    def _wait_if_needed(self):
+        for duration in self.rate_limits:
+            if self.rate_limit_counts[duration] >= self.rate_limits[duration]:
+                # Due to the experience of micro lag i´ve added a 0.1 second buffer.
+                time_to_wait = duration - (time.time() - self.rate_limit_last_updated[duration]) + 0.1
+                if time_to_wait > 0:
+                    self._logger.log(20, f'Waiting {time_to_wait} seconds to stay within api rate limits')
+                    time.sleep(time_to_wait)
+                self.rate_limit_counts[duration] = 0
+                self.rate_limit_last_updated[duration] = time.time()
+
+    # Get puuid
+    def get_puuid(self, summoner_name: str, server: str = 'euw1') -> tuple:
+        """
+            This function gets the puuid of a player from a SummonerDTO.
 
             Args:
-                response_headers: The response headers from a request.
+                summoner_name (str): The player's summoner name.
+                server (str): Server which the summoner is registered on.
 
             Returns:
-                rate_limits (dict): X-App-Rate-Limit from the apis response headers.
-                rate_limit_counts (dict): X-App-Rate-Limit-Count from the apis response headers.
+                tuple (int, str): The status code and if the request was successful, the puuid.
         """
-        rate_limit = response_headers["X-App-Rate-Limit"].split(',')
-        rate_limit_count = response_headers["X-App-Rate-Limit-Count"].split(',')
-        rate_limits = {}
-        rate_limit_counts = {}
+        # Call limiter functions to stay within api rate limitations.
+        self._reset_rate_limit_counts()
+        self._wait_if_needed()
 
-        for limit in rate_limit:
-            count, duration = limit.split(':')
-            rate_limits[int(duration)] = int(count)
+        # Make api call
+        response = summoner.get_summoner_by_name(self.api_key, summoner_name, server)
 
-        for count in rate_limit_count:
-            count, duration = count.split(':')
-            rate_limit_counts[int(duration)] = int(count)
+        # Update rate_limit_counts
+        for duration in self.rate_limits:
+            self.rate_limit_counts[duration] += 1
 
-        return rate_limits, rate_limit_counts
+        # Return results
+        if response.status_code == 200:
+            return (response.status_code, response.json()["puuid"])
+        else:
+            self._logger.log(30, f'Failed requesting puuid, summoner name: {summoner_name}, '
+                                 f'status: {response.status_code}')
+            return (response.status_code, None)
 
-    # Request rate buffer
-    def _wait_if_needed(self, rate_limits, rate_limit_counts):
+    # Get match ids
+    def get_match_ids(
+            self, puuid: str, start: int, server: str = 'europe', start_time: float = 1672444800) -> tuple:
         """
-                This function ensures that the apis request rate does stay within limitations.
-                Prevents statuscode 429 (Rate limit exceeded) from happening.
+                This function gets a list of up to 100 match ids.
 
                 Args:
-                    rate_limits (dict): X-App-Rate-Limit from the apis response headers.
-                    rate_limit_counts (dict): X-App-Rate-Limit-Count from the apis response headers.
-            """
-        current_time = time.time()
+                    puuid (str): The puuid of the player.
+                    start (int): The index where to start.
+                    server (str): Server which the matches have been played on.
+                    start_time (float): Epoch timestamp used for filtering.
 
-        for duration in rate_limits.keys():
-            if duration not in rate_limit_counts:
-                continue
-
-            if rate_limit_counts[duration] >= rate_limits[duration]:
-                time_to_wait = max(0, duration - (current_time - self.last_request_time))
-                self._logger.log(10, 'Waiting ' + str(time_to_wait) + ' seconds to stay within response limit...')
-                time.sleep(time_to_wait)
-
-                if duration == 1:
-                    self.last_request_time = time.time()
-
-    # Get puuid by summoner name.
-    def get_puuid(self, name: str):
+                Returns:
+                    tuple (int, list[str]) : The status code and if the request was successful, the match ids.
         """
-            This function gets the puuid from a SummonerDTO by using the summoner-V4 apis.
+        # Call limiter functions to stay within api rate limitations.
+        self._reset_rate_limit_counts()
+        self._wait_if_needed()
 
-            Args:
-                name (str): The summoner name
+        # Make api call
+        response = match.get_match_ids_by_puuid(
+            api_key=self.api_key, puuid=puuid, start=start, match_type='ranked',
+            count=100, server=server, start_time=start_time)
 
-            Returns:
-                status_code (int): Api response code
-                puuid (str): Puuid as a string if exists.
-        """
-        self._logger.log(10, 'Getting puuid for ('+name+')')
-        response = summoner_v4.get_summoner_by_name(name, self.api_key)
+        # Update rate_limit_counts
+        for duration in self.rate_limits:
+            self.rate_limit_counts[duration] += 1
 
-        rate_limits, rate_limit_counts = self._parse_headers(response.headers)
-        self._wait_if_needed(rate_limits, rate_limit_counts)
-
+        # Return results
         if response.status_code == 200:
-            return response.status_code, response.json()["puuid"]
+            return (response.status_code, list(response.json()))
         else:
-            self._logger.log(30, 'Issue during api call response code '+str(response.status_code))
-            return response.status_code, None
+            self._logger.log(30, f'Failed requesting match ids, puuid: {puuid}, '
+                                 f'status: {response.status_code}')
+            return (response.status_code, None)
+
+    # Get match
+    def get_match(self, match_id: str, server: str = 'europe') -> tuple:
+        """
+                This function gets a MatchDto.
+
+                Args:
+                    match_id (str): Id of the match.
+                    server (str): Server which the matches have been played on.
+
+                Returns:
+                    tuple (int, MatchDto) : The status code and if the request was successful, the MatchDto.
+        """
+        # Call limiter functions to stay within api rate limitations.
+        self._reset_rate_limit_counts()
+        self._wait_if_needed()
+
+        # Make api call
+        response = match.get_match(self.api_key, match_id, server)
+
+        # Update rate_limit_counts
+        for duration in self.rate_limits:
+            self.rate_limit_counts[duration] += 1
+
+        # Return results
+        if response.status_code == 200:
+            return (response.status_code, from_dict(data_class=MatchDto, data=response.json()))
+        else:
+            self._logger.log(30, f'Failed requesting match, id: {match_id}, status: {response.status_code}')
+            return (response.status_code, None)
+
+    # Get match timeline
+    def get_match_timeline(self, match_id: str, server: str = 'europe') -> tuple:
+        """
+                This function gets a MatchTimelineDto.
+
+                Args:
+                    match_id (str): Id of the match.
+                    server (str): Server which the matches have been played on.
+
+                Returns:
+                    tuple (int, MatchTimelineDto) : The status code and if the request was successful,
+                    the MatchTimelineDto.
+        """
+        # Call limiter functions to stay within api rate limitations.
+        self._reset_rate_limit_counts()
+        self._wait_if_needed()
+
+        # Make api call
+        response = match.get_match(self.api_key, match_id, server)
+
+        # Update rate_limit_counts
+        for duration in self.rate_limits:
+            self.rate_limit_counts[duration] += 1
+
+        # Return results
+        if response.status_code == 200:
+            return (response.status_code, from_dict(data_class=MatchTimelineDto, data=response.json()))
+        else:
+            self._logger.log(30, f'Failed requesting match timeline, id: {match_id}, '
+                                 f'status: {response.status_code}')
+            return (response.status_code, None)
