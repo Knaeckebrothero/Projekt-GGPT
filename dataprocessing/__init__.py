@@ -1,5 +1,5 @@
 """
-This package holds modules processing the riot games apis contents.
+This package holds modules for processing the riot games apis contents.
 https://developer.riotgames.com/apis
 
 Product -- GGPT

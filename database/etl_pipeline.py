@@ -13,17 +13,20 @@ from riotapi.api_controller import ApiController
 
 
 # Load matches into db
-def load_matches(controller: ApiController, database: Database,
-                 summoner_name: str,
-                 server: str,
-                 champion: str = None, start_time: float = 1672444800):
+def load_player_matches(
+        controller: ApiController,
+        database: Database,
+        puuid: str,
+        server: str,
+        champion: str = None,
+        start_time: float = 1672444800):
     """
     This function gets MatchDtos from the riot games api and saves them in the database.
 
     Args:
         controller (ApiController): Instance of ApiController on which to execute script.
         database (Database): Instance of Database on which to execute script.
-        summoner_name (str): Summoner name of the player whose matches should be gathered.
+        puuid (str): Of the player whose matches should be loaded.
         server (str): Server which the summoner is registered on.
         champion (str): Optional filter for champion played.
         start_time (float): Optional epoch timestamp used for filtering.
@@ -32,7 +35,6 @@ def load_matches(controller: ApiController, database: Database,
     logger = configure_custom_logger(module_name=__name__,
                                      console_level=int(read_config('loggingLevel')),
                                      logging_directory=read_config('loggingDirectory'))
-    puuid = controller.get_puuid(summoner_name, server)
     start = 0
     done = False
     matches = []
@@ -40,42 +42,9 @@ def load_matches(controller: ApiController, database: Database,
 
     # Info log
     if champion:
-        logger.info(f"Running etl for {summoner_name}, {server}, {champion}")
+        logger.info(f"Running etl for {puuid}, {server}, {champion}")
     else:
-        logger.info(f"Running etl for {summoner_name}, {server}")
-
-    # Haven't fully tested the mapping yet xD
-    match server:
-        case 'br1':  # Valid
-            server = 'americas'
-        case 'eun1':
-            server = 'europe'
-        case 'euw1':
-            server = 'europe'
-        case 'jp1':
-            server = 'asia'
-        case 'la1':
-            server = 'americas'
-        case 'la2':
-            server = 'americas'
-        case 'na1':
-            server = 'americas'
-        case 'oc1':
-            server = 'sea'
-        case 'ph2':
-            server = 'asia'
-        case 'ru':
-            server = 'europe'
-        case 'sg2':
-            server = 'asia'
-        case 'th2':
-            server = 'asia'
-        case 'tr1':
-            server = 'asia'
-        case 'tw2':
-            server = 'asia'
-        case 'vn2':
-            server = 'asia'
+        logger.info(f"Running etl for {puuid}, {server}")
 
     # Check if getting the puuid worked.
     if puuid is not None:

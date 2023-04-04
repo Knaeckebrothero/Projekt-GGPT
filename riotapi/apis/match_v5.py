@@ -9,9 +9,6 @@ https://developer.riotgames.com/
 """
 
 import requests
-from dacite import from_dict
-from riotapi import MatchDto
-from riotapi import MatchTimelineDto
 
 
 # Get a list of match ids by puuid.
