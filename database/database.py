@@ -9,7 +9,6 @@ https://developer.riotgames.com/
 
 import pymongo
 from pymongo.server_api import ServerApi
-from dataclasses import asdict
 from development.development_functions import read_config, configure_custom_logger
 
 
