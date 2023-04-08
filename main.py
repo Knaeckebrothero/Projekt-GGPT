@@ -22,7 +22,7 @@ if __name__ == '__main__':
                                      logging_directory=read_config('loggingDirectory'))
 
     # Load data processing keys
-    puuid, servers = get_player_data(['players', 'servers'])
+    puuid, servers = get_player_data(['puuids', 'servers'])
 
     for i in range(len(puuid)):
         etl.load_player_matches(
