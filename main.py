@@ -10,7 +10,7 @@ from dataprocessing.map_server import map_server_region
 from development.development_functions import read_config, configure_custom_logger, get_player_data
 from database.database import Database
 from riotapi.api_controller import ApiController
-from database import etl_pipeline as etl
+from etlpipline import etl_matches as etl
 
 # Main function
 if __name__ == '__main__':

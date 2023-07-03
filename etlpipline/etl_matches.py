@@ -1,5 +1,5 @@
 """
-This module holds a script that loads matchmaking dataprocessing from the riot api into the database.
+This module holds scripts that load matchmaking data from the riot api into the database.
 
 Product -- GGPT
 https://github.com/Knaeckebrothero/Projekt-GGPT
