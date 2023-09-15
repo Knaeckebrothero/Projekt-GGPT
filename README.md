@@ -1,4 +1,4 @@
-# ChadGGPT
+# Chad GGPT
 
 Introducing the new obnoxious hyper-masculine Generative Game Pre-coached Trainer. <br>
 A video game analytics tool by the infamous WinnerAlwaysWin. <br>
